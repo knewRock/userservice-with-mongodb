@@ -129,8 +129,8 @@ class newUser(Resource):
     def post(self):
         user = request.get_json()
         user['password'] = bcrypt.hashpw(str(user['password']), bcrypt.gensalt())
-        if user['bossId'] is not None:
-            user['bossId'] = ObjectId(user['bossId'])
+        # if user['bossId'] is not None:
+        #     user['bossId'] = ObjectId(user['bossId'])
         if not user:
             user = {"response": "Don't have data"}
             return jsonify(user)
@@ -150,13 +150,49 @@ class Login(Resource):
             return Response( json_util.dumps({"response": False}, sort_keys=True),mimetype='application/json')
         # return Response( json_util.dumps(data, sort_keys=True),mimetype='application/json')
 
+# class getBossesOfUser(Resource):
+#     def get(self, id):
+#         bosses = []
+#         user = mongo.db.usertestonly.find_one({'_id': ObjectId(id)})
+#         while(user["bossId"] != None):
+#             user = mongo.db.usertestonly.find_one({'_id': ObjectId(user["bossId"])})
+#             bosses.append(user) 
+
+#         bosses = serializerList(bosses)
+#         return Response( json_util.dumps(bosses, sort_keys=True),mimetype='application/json')
+class Relationship(Resource):
+    def post(self):
+        relation = request.get_json()
+        if not relation:
+            return jsonify({"response": "Don't have data"})
+        mongo.db.relationship.insert(relation)
+        return Response( json_util.dumps({"response": "add new relation"}, sort_keys=True),mimetype='application/json')
+
 class getBossesOfUser(Resource):
+    # bosses = []
+    # a= "12345"
+    def findBoss(self, subordinateId, bosses):
+        # while(bosses != None):
+        bossList = mongo.db.relationship.find({'subordinateId': subordinateId})
+        # print len(bossList)
+        if(bosses != None):
+            for boss in bossList:
+                if boss['bossId'] in bosses:
+                    continue
+                else:
+                    bosses.append(boss['bossId'])
+                    self.findBoss(boss['bossId'], bosses)
+        
     def get(self, id):
+        bossesId = []
+        self.findBoss(id, bossesId)
         bosses = []
-        user = mongo.db.usertestonly.find_one({'_id': ObjectId(id)})
-        while(user["bossId"] != None):
-            user = mongo.db.usertestonly.find_one({'_id': ObjectId(user["bossId"])})
-            bosses.append(user) 
+        for bossId in bossesId:
+            bosses.append(mongo.db.usertestonly.find_one({'_id': ObjectId(bossId)}))
+        # user = mongo.db.usertestonly.find_one({'_id': ObjectId(id)})
+        # while(user["bossId"] != None):
+        #     user = mongo.db.usertestonly.find_one({'_id': ObjectId(user["bossId"])})
+        #     bosses.append(user) 
 
         bosses = serializerList(bosses)
         return Response( json_util.dumps(bosses, sort_keys=True),mimetype='application/json')
@@ -185,6 +221,7 @@ api.add_resource(getBossesOfUser, "/user/<string:id>/getBosses", endpoint="bosse
 # api.add_resource(newBoss, "/newBoss", endpoint="newBoss")
 # api.add_resource(newOfficer, "/newOfficer", endpoint="newOfficer")
 api.add_resource(newUser, "/newUser", endpoint="newUser")
+api.add_resource(Relationship, "/newRelationship", endpoint="newRelationship")
 api.add_resource(Login, "/login", endpoint="login")
 api.add_resource(Test, "/test", endpoint="test")
 
