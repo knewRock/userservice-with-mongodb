@@ -2,6 +2,7 @@ from flask import Flask, jsonify, url_for, redirect, request
 from flask_pymongo import PyMongo
 from flask_restful import Api, Resource
 from flask import Response
+from flask_cors import CORS, cross_origin
 from bson import json_util
 from bson import ObjectId
 import json
@@ -13,6 +14,9 @@ app.config['MONGO_HOST'] = 'localhost'
 app.config['MONGO_PORT'] = 27017
 mongo = PyMongo(app, config_prefix='MONGO')
 APP_URL = "http://127.0.0.1:5000"
+
+#input the other domain in this command
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
