@@ -11,9 +11,9 @@ import bcrypt
 app = Flask(__name__)
 app.config["MONGO_DBNAME"] = "usertest"
 app.config['MONGO_HOST'] = 'localhost'
-app.config['MONGO_PORT'] = 27017
+app.config['MONGO_PORT'] = 27020
 mongo = PyMongo(app, config_prefix='MONGO')
-APP_URL = "http://127.0.0.1:5000"
+# APP_URL = "http://127.0.0.1:1024"
 
 #input the other domain in this command
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -201,6 +201,24 @@ class getBossesOfUser(Resource):
         bosses = serializerList(bosses)
         return Response( json_util.dumps(bosses, sort_keys=True),mimetype='application/json')
 
+class getTree(Resource):
+    def createTree(self,bossId):
+        tree = {}
+        tree['name'] = mongo.db.usertestonly.find_one({'_id': ObjectId(bossId)})
+        tree['name'] = serializer(tree['name'])
+        subordinateList = mongo.db.relationship.find({'bossId': bossId})
+        if subordinateList.count() >0:
+            tree['children'] = []
+            for subordinate in subordinateList:
+                childTree = self.createTree(subordinate['subordinateId'])
+                tree['children'].append(childTree)
+        return tree
+
+    def get(self):
+        root = mongo.db.usertestonly.find_one({'firstname':'boss0'})
+        tree = self.createTree(str(root['_id']))
+        return Response( json_util.dumps(tree),mimetype='application/json')        
+                        
 class Test(Resource):
     def post(self):
         data = request.get_json()
@@ -221,6 +239,7 @@ api.add_resource(User, "/user/<string:id>", endpoint="user")
 api.add_resource(deleteUser, "/deleteUser/<string:id>", endpoint="deleteUser")
 # api.add_resource(getBosses, "/getBosses", endpoint="bosses")
 api.add_resource(getBossesOfUser, "/user/<string:id>/getBosses", endpoint="bossesOfUser")
+api.add_resource(getTree, "/tree", endpoint="tree")
 # api.add_resource(getOfficers, "/getOfficers", endpoint="officers")
 # api.add_resource(newBoss, "/newBoss", endpoint="newBoss")
 # api.add_resource(newOfficer, "/newOfficer", endpoint="newOfficer")
@@ -230,4 +249,4 @@ api.add_resource(Login, "/login", endpoint="login")
 api.add_resource(Test, "/test", endpoint="test")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port =5001, debug=True)
