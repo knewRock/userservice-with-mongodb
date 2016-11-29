@@ -218,6 +218,38 @@ class getTree(Resource):
         root = mongo.db.usertestonly.find_one({'firstname':'boss0'})
         tree = self.createTree(str(root['_id']))
         return Response( json_util.dumps(tree),mimetype='application/json')        
+
+class getNodeAndLink(Resource):
+    def createTree(self,bossId):
+        nodeAndLink = {}
+        nodeAndLink['nodes'] = mongo.db.usertestonly.find()
+        nodeAndLink['nodes'] = serializerList(nodeAndLink['nodes'])
+
+        nodes = []
+        for node in nodeAndLink['nodes']:
+            nodes.append(node['userId'])
+
+        links = mongo.db.relationship.find()
+        nodeAndLink['links'] = []
+        for link in links:
+            st = {}
+            st['source'] = nodes.index(link['bossId'])
+            st['target'] = nodes.index(link['subordinateId'])
+            nodeAndLink['links'].append(st)
+
+        # print nodeAndLink['link'].index({'firstname':'boss0'})
+        # subordinateList = mongo.db.relationship.find({'bossId': bossId})
+        # if subordinateList.count() >0:
+        #     tree['children'] = []
+        #     for subordinate in subordinateList:
+        #         childTree = self.createTree(subordinate['subordinateId'])
+        #         tree['children'].append(childTree)
+        return nodeAndLink
+
+    def get(self):
+        root = mongo.db.usertestonly.find_one({'firstname':'boss0'})
+        tree = self.createTree(str(root['_id']))
+        return Response( json_util.dumps(tree),mimetype='application/json')        
                         
 class Test(Resource):
     def post(self):
@@ -240,6 +272,7 @@ api.add_resource(deleteUser, "/deleteUser/<string:id>", endpoint="deleteUser")
 # api.add_resource(getBosses, "/getBosses", endpoint="bosses")
 api.add_resource(getBossesOfUser, "/user/<string:id>/getBosses", endpoint="bossesOfUser")
 api.add_resource(getTree, "/tree", endpoint="tree")
+api.add_resource(getNodeAndLink, "/nodeAndLink", endpoint="nodeAndLink")
 # api.add_resource(getOfficers, "/getOfficers", endpoint="officers")
 # api.add_resource(newBoss, "/newBoss", endpoint="newBoss")
 # api.add_resource(newOfficer, "/newOfficer", endpoint="newOfficer")
