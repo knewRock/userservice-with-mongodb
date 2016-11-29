@@ -236,20 +236,12 @@ class getNodeAndLink(Resource):
             st['source'] = nodes.index(link['bossId'])
             st['target'] = nodes.index(link['subordinateId'])
             nodeAndLink['links'].append(st)
-
-        # print nodeAndLink['link'].index({'firstname':'boss0'})
-        # subordinateList = mongo.db.relationship.find({'bossId': bossId})
-        # if subordinateList.count() >0:
-        #     tree['children'] = []
-        #     for subordinate in subordinateList:
-        #         childTree = self.createTree(subordinate['subordinateId'])
-        #         tree['children'].append(childTree)
         return nodeAndLink
 
     def get(self):
         root = mongo.db.usertestonly.find_one({'firstname':'boss0'})
-        tree = self.createTree(str(root['_id']))
-        return Response( json_util.dumps(tree),mimetype='application/json')        
+        nodeAndLink = self.createTree(str(root['_id']))
+        return Response( json_util.dumps(nodeAndLink),mimetype='application/json')        
                         
 class Test(Resource):
     def post(self):
